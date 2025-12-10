@@ -6,6 +6,9 @@ import HeroSection from "../components/landing/HeroSection";
 import Benefits from "../components/landing/Benefits";
 import HowItWorks from "../components/landing/HowItworks";
 import Contact from "../components/landing/Contact";
+import ServicesPreview from "../components/landing/ServicePreview";
+import BeforeAfter from "../components/landing/BeforeAfter";
+import FeaturedReviews from "../components/landing/FeaturedReviews";
 
 function Home() {
   return (
@@ -15,7 +18,7 @@ function Home() {
         className="position-absolute top-0 start-0 w-100 h-100"
         style={{
           background:
-            "linear-gradient(135deg, #007bfd, #000000)",
+            "linear-gradient(135deg, #0b1f3f 0%, #112b61  50%, #0f4c81  100%)",
           zIndex: 0,
         }}
       />
@@ -30,20 +33,13 @@ function Home() {
         {/* funcionamiento */}
         <HowItWorks/>
         {/* servicios destacados */}
-        <div className="flex-grow-1 d-flex flex-column justify-content-center text-center text-light px-4 py-2">
-          <h2 className="mb-3 fs-2">Nuestros servicios</h2>
-          <p className="mb-4 fs-5">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Praesentium placeat porro, voluptate perferendis expedita ab soluta dolor, officiis modi vel, temporibus eaque iste hic voluptates. Saepe illum quisquam sint ea.</p>
-        </div>
+        <ServicesPreview/>
         
         {/* galeria */}
-        <div className="flex-grow-1 d-flex flex-column justify-content-center text-center text-light px-4 py-2">
-          <h2 className="mb-3 fs-2">Antes y despues</h2>
-          <p className="mb-4 fs-5">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Praesentium placeat porro, voluptate perferendis expedita ab soluta dolor, officiis modi vel, temporibus eaque iste hic voluptates. Saepe illum quisquam sint ea.</p>
-        </div>
+         <BeforeAfter />
         {/* reviews destacadas */}
         <div className="flex-grow-1 d-flex flex-column justify-content-center text-center text-light px-4 py-2">
-          <h2 className="mb-3 fs-2">Testimonios destacados</h2>
-          <p className="mb-4 fs-5">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Praesentium placeat porro, voluptate perferendis expedita ab soluta dolor, officiis modi vel, temporibus eaque iste hic voluptates. Saepe illum quisquam sint ea.</p>
+          <FeaturedReviews />
         </div>
         {/* Contacto */}
         <Contact/>

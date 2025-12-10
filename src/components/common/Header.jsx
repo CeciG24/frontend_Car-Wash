@@ -39,7 +39,9 @@ export default function Header() {
             <li className="nav-item">
               <Link to="/Reviews" className="nav-link">Reseñas</Link>
             </li>
-            \
+            <li className="nav-item">
+              <Link to="/Portfolio" className="nav-link">Portafolio</Link>
+            </li>
 
             {/* Botón CTA */}
             <li className="nav-item ms-lg-3">
