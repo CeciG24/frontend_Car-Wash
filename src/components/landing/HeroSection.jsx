@@ -21,7 +21,7 @@ function HeroSection() {
             
             <p className="fs-4 mb-4" style={{ color: "rgba(255, 255, 255, 0.85)" }}>
               Lavado profesional a domicilio o en nuestras instalaciones. 
-              <strong> Agenda en 2 minutos, resultados en 1 hora.</strong>
+              <strong> Agenda en 2 minutos, obtén resultados profesionales.</strong>
             </p>
 
             <div className="d-flex flex-column flex-sm-row gap-3 mb-4">

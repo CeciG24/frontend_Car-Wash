@@ -4,7 +4,7 @@ import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 import HeroSection from "../components/landing/HeroSection";
 import Benefits from "../components/landing/Benefits";
-import HowItWorks from "../components/landing/HowItworks";
+import HowItWorks from "../components/landing/HowItWorks";
 import Contact from "../components/landing/Contact";
 import ServicesPreview from "../components/landing/ServicePreview";
 import BeforeAfter from "../components/landing/BeforeAfter";

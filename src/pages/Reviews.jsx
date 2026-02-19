@@ -129,18 +129,37 @@ function Reviews() {
                 </div>
 
                 <div className="mb-3">
-                  <label htmlFor="calificacion" className="form-label">
-                    Calificación: <span className="text-warning fs-5">{renderStars(calificacion)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    className="form-range"
-                    id="calificacion"
-                    min="1"
-                    max="5"
-                    value={calificacion}
-                    onChange={(e) => setCalificacion(e.target.value)}
-                  />
+                  <label className="form-label d-block">Calificación</label>
+                  <div className="d-flex justify-content-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setCalificacion(star)}
+                        className="btn btn-star"
+                        style={{
+                          fontSize: "3rem",
+                          background: "transparent",
+                          border: "none",
+                          color: star <= calificacion ? "#ffc107" : "rgba(255, 255, 255, 0.3)",
+                          padding: "0.5rem",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          transform: star <= calificacion ? "scale(1.1)" : "scale(1)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "scale(1.2)";
+                          e.currentTarget.style.filter = "drop-shadow(0 0 8px rgba(255, 193, 7, 0.8))";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = star <= calificacion ? "scale(1.1)" : "scale(1)";
+                          e.currentTarget.style.filter = "none";
+                        }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="mb-4">

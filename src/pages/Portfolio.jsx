@@ -7,7 +7,7 @@ function Portfolio() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/portfolio-services")
+    fetch("http://127.0.0.1:5000/portfolio")
       .then((res) => res.json())
       .then((json) => setData(json.Servicios || []))
       .catch((err) => {
