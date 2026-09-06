@@ -1,73 +1,10 @@
-import React, { useState, useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { Link } from "react-router-dom";
-
-function ServicesPreview() {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    fetch("http://127.0.0.1:5000/services")
-      .then((res) => res.json())
-      .then((json) => setData(json.Servicios))
-      .catch((err) => console.error(err));
-  }, []);
-
-  return (
-    <div className="container my-5">
-      <h2 className="text-center text-light fw-bold mb-4">Nuestros Servicios</h2>
-      <div className="row g-4 justify-content-center">
-        {data.slice(0, 3).map((item, idx) => (
-          <div key={idx} className="col-md-4 col-lg-3">
-            <div
-              className="card h-100 border-0 shadow-lg text-center text-light"
-              style={{
-                background: "rgba(255, 255, 255, 0.07)",
-                backdropFilter: "blur(10px)",
-                borderRadius: "20px",
-                transition: "transform 0.3s, box-shadow 0.3s",
-              }}
-            >
-              <div className="card-body">
-                <h5 className="card-title fw-bold mb-3">{item.nombre}</h5>
-                <p
-                  className="card-text fs-5"
-                  style={{ color: "rgba(255, 255, 255, 0.85)" }}
-                >
-                  ${item.precio}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="text-center mt-5">
-          <a
-            href="/Services/"
-            className="btn btn-lg px-5 py-3 text-decoration-none text-white"
-            style={{
-              background: "linear-gradient(135deg, #007bff, #0056b3)",
-              border: "none",
-              borderRadius: "50px",
-              fontWeight: "bold",
-              fontSize: "1.1rem",
-              transition: "all 0.3s",
-              boxShadow: "0 5px 20px rgba(0, 123, 255, 0.3)"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-3px)";
-              e.currentTarget.style.boxShadow = "0 10px 30px rgba(0, 123, 255, 0.5)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 5px 20px rgba(0, 123, 255, 0.3)";
-            }}
-          >
-            Ver todos los servicios
-          </a>
-        </div>
-    </div>
-  );
+import { apiFetch } from '../../services/api';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import auto from '../../assets/autoLimpio.jpg';
+export default function ServicesPreview() {
+const [data, setData] = useState([]);
+const [status, setStatus] = useState('loading');
+useEffect(() => { let active = true; apiFetch('/services').then(res => { if (!res.ok) throw new Error(); return res.json(); }).then(json => { if (active) { setData(json.Servicios || []); setStatus('ready'); } }).catch(() => { if (active) setStatus('error'); }); return () => { active = false; }; }, []);
+return <section className="section-space services-section"><div className="shell"><div className="section-heading"><div><span className="eyebrow">NUESTROS SERVICIOS</span><h2>Un cuidado a la altura<br />de tu auto.</h2></div><Link className="outline-button" to="/Services">Ver todos los servicios ↗</Link></div><div className="service-showcase"><img src={auto} alt="Cuidado y pulido de pintura automotriz" loading="lazy" /><div className="service-caption"><span className="eyebrow">ACABADOS PROFESIONALES</span><h3>La diferencia está<br />en los detalles.</h3></div></div><div className="service-list">{data.slice(0, 3).map((item, index) => <Link to="/Services" className="service-item" key={item.id ?? index}><span className="eyebrow">0{index + 1}</span><h3>{item.nombre}</h3><span className="service-price">${item.precio} <span>↗</span></span></Link>)}</div>{!data.length && <p className="data-message" role="status">{status === 'loading' ? 'Cargando servicios…' : status === 'error' ? 'No pudimos cargar los servicios. Contáctanos para conocer nuestros paquetes.' : 'Próximamente encontrarás aquí nuestros paquetes.'}</p>}</div></section>;
 }
-
-export default ServicesPreview;

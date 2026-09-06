@@ -1,12 +1,30 @@
-# React + Vite
+# Frontend público LS 1713
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Configuración
 
-Currently, two official plugins are available:
+Crea .env.local usando .env.example como referencia:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+VITE_API_URL=http://127.0.0.1:5000
+VITE_PORTFOLIO_SOURCE=api
 
-## Expanding the ESLint configuration
+Reinicia Vite después de cambiar estas variables. VITE_API_URL debe ser la URL
+base del backend, sin /api adicional. Las variables VITE_ son públicas: no
+pongas secretos ni contraseñas en ellas.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+npm install
+npm run dev
+
+El cliente HTTP compartido está en src/services/api.js. Servicios, reseñas,
+contacto, citas y portafolio utilizan la misma URL base.
+
+El portafolio usa la API de la base de datos por defecto. El archivo
+src/data/portfolio.json se conserva como alternativa: establece
+VITE_PORTFOLIO_SOURCE=json para usarlo. Consulta src/data/README.md.
+
+## Verificación
+
+npm run lint
+npm run build
+
+La carpeta frontend-adminpanel es un proyecto separado e incompleto: esta
+entrega no implementa sus pantallas.

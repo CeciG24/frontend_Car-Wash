@@ -1,3 +1,4 @@
+import { apiFetch } from '../../services/api';
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -10,7 +11,7 @@ function Contact() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     if (!nombre.trim() || !numero.trim() || !detalles.trim()) {
       setMessage({ text: "Por favor completa todos los campos", type: "warning" });
       return;
@@ -26,7 +27,7 @@ function Contact() {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/contacts", {
+      const response = await apiFetch("/contacts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -37,24 +38,24 @@ function Contact() {
       const result = await response.json();
 
       if (response.ok) {
-        setMessage({ 
-          text: "¡Mensaje enviado exitosamente! Nos pondremos en contacto pronto.", 
-          type: "success" 
+        setMessage({
+          text: "¡Mensaje enviado exitosamente! Nos pondremos en contacto pronto.",
+          type: "success"
         });
         setNombre("");
         setNumero("");
         setDetalles("");
       } else {
-        setMessage({ 
-          text: result.error || "Error al enviar el mensaje", 
-          type: "danger" 
+        setMessage({
+          text: result.error || "Error al enviar el mensaje",
+          type: "danger"
         });
       }
     } catch (error) {
       console.error("Error:", error);
-      setMessage({ 
-        text: "Error de conexión. Por favor intenta nuevamente.", 
-        type: "danger" 
+      setMessage({
+        text: "Error de conexión. Por favor intenta nuevamente.",
+        type: "danger"
       });
     } finally {
       setLoading(false);
@@ -69,14 +70,14 @@ function Contact() {
       </p>
       <div className="card-body p-4">
         {message.text && (
-          <div 
-            className={`alert alert-${message.type} alert-dismissible fade show`} 
+          <div
+            className={`alert alert-${message.type} alert-dismissible fade show`}
             role="alert"
           >
             {message.text}
-            <button 
-              type="button" 
-              className="btn-close" 
+            <button
+              type="button"
+              className="btn-close" aria-label="Cerrar aviso"
               onClick={() => setMessage({ text: "", type: "" })}
             ></button>
           </div>
@@ -132,8 +133,8 @@ function Contact() {
           </div>
 
           <div className="text-center">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary btn-lg w-100"
               disabled={loading}
             >

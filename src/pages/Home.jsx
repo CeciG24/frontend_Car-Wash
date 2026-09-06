@@ -1,54 +1,13 @@
-import React from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import Header from "../components/common/Header";
-import Footer from "../components/common/Footer";
-import HeroSection from "../components/landing/HeroSection";
-import Benefits from "../components/landing/Benefits";
-import HowItWorks from "../components/landing/HowItWorks";
-import Contact from "../components/landing/Contact";
-import ServicesPreview from "../components/landing/ServicePreview";
-import BeforeAfter from "../components/landing/BeforeAfter";
-import FeaturedReviews from "../components/landing/FeaturedReviews";
-
-function Home() {
-  return (
-    <div className="position-relative min-vh-100 w-100 text-dark d-flex flex-column">
-      {/* Gradient de fondo */}
-      <div
-        className="position-absolute top-0 start-0 w-100 h-100"
-        style={{
-          background:
-            "linear-gradient(135deg, #0b1f3f 0%, #112b61  50%, #0f4c81  100%)",
-          zIndex: 0,
-        }}
-      />
-      {/* Contenido principal */}
-      <div className="position-relative z-1 d-flex flex-column min-vh-100">
-        {/* Navbar */}
-        <Header />
-        {/* Hero Section */}
-        <HeroSection/>
-        {/* Beneficios */}
-        <Benefits/>
-        {/* funcionamiento */}
-        <HowItWorks/>
-        {/* servicios destacados */}
-        <ServicesPreview/>
-        
-        {/* galeria */}
-         <BeforeAfter />
-        {/* reviews destacadas */}
-        <div className="flex-grow-1 d-flex flex-column justify-content-center text-center text-light px-4 py-2">
-          <FeaturedReviews />
-        </div>
-        {/* Contacto */}
-        <Contact/>
-         {/* Footer */}
-        <Footer />
-
-      </div>
-    </div>
-  );
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
+import HeroSection from '../components/landing/HeroSection';
+import Benefits from '../components/landing/Benefits';
+import HowItWorks from '../components/landing/HowItWorks';
+import ServicesPreview from '../components/landing/ServicePreview';
+import BeforeAfter from '../components/landing/BeforeAfter';
+import FeaturedReviews from '../components/landing/FeaturedReviews';
+import Contact from '../components/landing/Contact';
+import TikTokPortfolio from '../components/landing/TikTokPortfolio';
+export default function Home() {
+return <div className="detailing-home"><div className="first-screen"><Header /><HeroSection /></div><main id="main-content"><Benefits /><HowItWorks /><ServicesPreview /><BeforeAfter /><TikTokPortfolio /><FeaturedReviews /><section id="contacto" className="contact-section section-space"><div className="shell contact-layout"><div><span className="eyebrow">HABLEMOS DE TU AUTO</span><h2>El siguiente detalle<br />empieza contigo.</h2><p>Cuéntanos qué necesita tu auto. Nosotros nos encargamos del resto.</p><a className="contact-phone" href="tel:2215568660">221 556 8660 ↗</a><span className="contact-note">A domicilio o en nuestras instalaciones.</span></div><Contact /></div></section></main><Footer /></div>;
 }
-
-export default Home;

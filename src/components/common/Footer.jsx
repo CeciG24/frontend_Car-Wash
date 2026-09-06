@@ -1,35 +1,4 @@
-import { Link } from "react-router-dom";
-import IGlogo from "./../../assets/Instagram_logo.png";
-import WhatsApp from "./../../assets/whatsapp-logo.png";
-import FBLogo from "./../../assets/Logo_de_Facebook.png";
-import TikTokLogo from "./../../assets/tiktok_logo.png";
-
-function Footer() {
-  return (
-    <footer className="text-center p-3 bg-dark text-light">
-      © {new Date().getFullYear()} LS 1713 Car Detailing | Todos los derechos reservados
-      <p className="fw-bold">Síguenos en redes</p>
-
-      <div className="flex-column flex-md-row align-items-center gap-4 gap-md-4 d-sm-inline">
-        <Link className="navbar-brand fw-bold" to="https://www.instagram.com/ls1713_detail/">
-          <img src={IGlogo} alt="Instagram" style={{ height: "40px", marginRight: "10px" }} />
-          ls1713_detail
-        </Link>
-        <Link className="navbar-brand fw-bold" to="https://www.facebook.com/profile.php?id=61577260941858">
-          <img src={FBLogo} alt="Facebook" style={{ height: "40px", marginRight: "10px" }} />
-          LS 1713 Carwash 
-        </Link>
-        <Link className="navbar-brand fw-bold" to="https://wa.me/2215568660"> 
-          <img src={WhatsApp} alt="WhatsApp" style={{ height: "40px", marginRight: "10px" }} />
-          2215568660
-        </Link>
-        <Link className="navbar-brand fw-bold" to="https://www.tiktok.com/@ls.1713">
-          <img src={TikTokLogo} alt="TikTok" style={{ height: "40px", marginRight: "10px" }} />
-          ls.1713
-        </Link>
-      </div>
-    </footer>
-  );
+import { Link } from 'react-router-dom';
+export default function Footer() {
+return <footer className="site-footer"><div className="shell footer-grid"><div><Link className="footer-brand" to="/">LS 1713<span>↗</span></Link><p>Pasión por los autos.<br />Cuidado en cada detalle.</p></div><div><h2>EXPLORA</h2><Link to="/Services">Servicios</Link><Link to="/Portfolio">Portafolio</Link><Link to="/Reviews">Reseñas</Link><Link to="/Booking">Reservar una cita</Link></div><div><h2>SÍGUENOS</h2><a href="https://www.instagram.com/ls1713_detail/">Instagram ↗</a><a href="https://www.facebook.com/profile.php?id=61577260941858">Facebook ↗</a><a href="https://www.tiktok.com/@ls.1713">TikTok ↗</a><a href="https://wa.me/2215568660">WhatsApp ↗</a></div></div><div className="shell footer-bottom">© {new Date().getFullYear()} LS 1713 Car Detailing<span>Todos los derechos reservados.</span></div></footer>;
 }
-
-export default Footer;

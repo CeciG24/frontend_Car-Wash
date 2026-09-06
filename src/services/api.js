@@ -1,25 +1,21 @@
-// services/api.js
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000').replace(/\/$/, '');
 
-export const apiRequest = async (endpoint, options = {}) => {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        },
-        ...options,
-    });
-    
-    if (!response.ok) {
-        throw new Error('Error en la solicitud');
-    }
-    
-    return response.json();
-};
+export function apiFetch(path, options = {}) {
+  return fetch(API_BASE_URL + '/' + path.replace(/^\//, ''), options);
+}
 
-export const getServices = () => apiRequest('/api/services');
-export const createBooking = (data) => 
-    apiRequest('/api/bookings', {
-        method: 'POST',
-        body: JSON.stringify(data),
-    });
+export async function apiRequest(path, options = {}) {
+  const response = await apiFetch(path, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'No se pudo completar la solicitud');
+  return data;
+}
+
+export const getServices = () => apiRequest('/services');
+export const createBooking = data => apiRequest('/appointments', {
+  method: 'POST',
+  body: JSON.stringify(data),
+});

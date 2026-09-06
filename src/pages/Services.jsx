@@ -1,176 +1,52 @@
-import React, { useState, useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import Header from "../components/common/Header";
+import { apiFetch } from '../services/api';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import PageLayout from '../components/common/PageLayout';
 
-function Services() {
+export default function Services() {
   const [data, setData] = useState([]);
-  const [flippedCards, setFlippedCards] = useState({});
+  const [status, setStatus] = useState('loading');
   const [descriptions, setDescriptions] = useState({});
-
+  const [expanded, setExpanded] = useState({});
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/services")
-      .then((res) => res.json())
-      .then((json) => setData(json.Servicios))
-      .catch((err) => console.error(err));
+    let active = true;
+    apiFetch('/services')
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+      .then(json => { if (active) { setData(json.Servicios || []); setStatus('ready'); } })
+      .catch(() => { if (active) setStatus('error'); });
+    return () => { active = false; };
   }, []);
-
-  const handleFlip = async (serviceId, idx) => {
-    // Si no tenemos la descripción, la obtenemos
-    if (!descriptions[serviceId]) {
-      try {
-        const res = await fetch(
-          `http://127.0.0.1:5000/services/descriptions/${serviceId}`
-        );
-        const json = await res.json();
-        setDescriptions((prev) => ({
-          ...prev,
-          [serviceId]: json.Descripcion.descripcion,
-        }));
-      } catch (err) {
-        console.error("Error al obtener descripción:", err);
-      }
+  async function toggle(id) {
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+    if (descriptions[id]) return;
+    setDescriptions(prev => ({ ...prev, [id]: 'Cargando detalles…' }));
+    try {
+      const res = await apiFetch(`/services/descriptions/${id}`);
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setDescriptions(prev => ({ ...prev, [id]: json.Descripcion?.descripcion || 'Consulta con nosotros los detalles de este servicio.' }));
+    } catch {
+      setDescriptions(prev => ({ ...prev, [id]: 'No pudimos cargar los detalles. Contáctanos para obtener más información.' }));
     }
-
-    // Volteamos la tarjeta
-    setFlippedCards((prev) => ({
-      ...prev,
-      [idx]: !prev[idx],
-    }));
-  };
-
+  }
   return (
-    <div
-      className="min-vh-100 text-light"
-      style={{
-        background: "linear-gradient(135deg, #0a0f24, #112b61, #0f4c81)",
-      }}
-    >
-      <Header />
-      <div className="container mt-5 pb-5">
-        <h1 className="mb-5 text-center fw-bold">Nuestros Servicios</h1>
-        <div className="row g-4 justify-content-center">
-          {data.map((item, idx) => (
-            <div key={idx} className="col-md-4 col-lg-3">
-              <div
-                className="card-container"
-                style={{
-                  perspective: "1000px",
-                  height: "280px",
-                }}
-              >
-                <div
-                  className={`card-flip ${
-                    flippedCards[idx] ? "flipped" : ""
-                  }`}
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    height: "100%",
-                    transformStyle: "preserve-3d",
-                    transition: "transform 0.6s",
-                    transform: flippedCards[idx]
-                      ? "rotateY(180deg)"
-                      : "rotateY(0deg)",
-                  }}
-                >
-                  {/* Cara frontal */}
-                  <div
-                    className="card h-100 border-0 shadow-lg text-center text-light"
-                    style={{
-                      position: "absolute",
-                      width: "100%",
-                      height: "100%",
-                      backfaceVisibility: "hidden",
-                      background: "rgba(255, 255, 255, 0.07)",
-                      backdropFilter: "blur(10px)",
-                      borderRadius: "20px",
-                    }}
-                  >
-                    <div className="card-body d-flex flex-column justify-content-center">
-                      <h5 className="card-title fw-bold mb-3">{item.nombre}</h5>
-                      <p
-                        className="card-text fs-5 mb-4"
-                        style={{ color: "rgba(255, 255, 255, 0.85)" }}
-                      >
-                        ${item.precio}
-                      </p>
-                      <button
-                        className="btn btn-outline-light mx-auto"
-                        style={{
-                          borderRadius: "25px",
-                          padding: "8px 24px",
-                          transition: "all 0.3s",
-                        }}
-                        onClick={() => handleFlip(item.id, idx)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255, 255, 255, 0.2)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent";
-                        }}
-                      >
-                        Ver más
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Cara trasera */}
-                  <div
-                    className="card h-100 border-0 shadow-lg text-center text-light"
-                    style={{
-                      position: "absolute",
-                      width: "100%",
-                      height: "100%",
-                      backfaceVisibility: "hidden",
-                      background: "rgba(0, 123, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      borderRadius: "20px",
-                      transform: "rotateY(180deg)",
-                    }}
-                  >
-                    <div className="card-body d-flex flex-column justify-content-between p-4">
-                      <div>
-                        <h5 className="card-title fw-bold mb-3">{item.nombre}</h5>
-                        <p
-                          className="card-text"
-                          style={{
-                            color: "rgba(255, 255, 255, 0.9)",
-                            fontSize: "0.9rem",
-                            lineHeight: "1.5",
-                          }}
-                        >
-                          {descriptions[item.id] || "Cargando descripción..."}
-                        </p>
-                      </div>
-                      <button
-                        className="btn btn-outline-light mx-auto mt-3"
-                        style={{
-                          borderRadius: "25px",
-                          padding: "8px 24px",
-                          transition: "all 0.3s",
-                        }}
-                        onClick={() => handleFlip(item.id, idx)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255, 255, 255, 0.2)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent";
-                        }}
-                      >
-                        Volver
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+    <PageLayout eyebrow="SERVICIOS" title="El cuidado que tu auto merece." description="Explora nuestros servicios y encuentra el tratamiento ideal para cada detalle.">
+      <div className="catalog-grid">
+        {data.map((item, index) => {
+          const id = item.id_servicio ?? item.id;
+          return <article className="catalog-card" key={id}>
+            <span className="catalog-number">0{index + 1} / DETAILING</span>
+            <h2>{item.nombre}</h2>
+            <div className="catalog-price"><span>$</span>{item.precio}</div>
+            <p>Cuidado profesional y atención en cada detalle de tu auto.</p>
+            <button className="detail-toggle" aria-expanded={!!expanded[id]} aria-controls={`detail-${id}`} onClick={() => toggle(id)}>Detalles del servicio <span>{expanded[id] ? '−' : '+'}</span></button>
+            {expanded[id] && <p id={`detail-${id}`} className="service-description" role="status">{descriptions[id]}</p>}
+            <Link className="action-button" to="/Booking">Reservar este servicio ↗</Link>
+          </article>;
+        })}
       </div>
-    </div>
+      {!data.length && <div className="empty-panel" role="status"><span className="empty-symbol">✧</span><h2>{status === 'loading' ? 'Preparando nuestros servicios' : status === 'error' ? 'El catálogo no está disponible por ahora' : 'Estamos preparando nuestros paquetes'}</h2><p>{status === 'error' ? 'Puedes llamarnos para conocer las opciones de cuidado para tu auto.' : 'Aquí encontrarás los servicios y sus precios.'}</p><a className="outline-button" href="tel:2215568660">Consultar servicios ↗</a></div>}
+      <div className="page-callout"><div><span className="eyebrow">ATENCIÓN PERSONALIZADA</span><h2>¿No sabes por dónde empezar?</h2><p>Cuéntanos qué necesita tu auto y te ayudamos a elegir.</p></div><a className="action-button" href="tel:2215568660">Hablemos ↗</a></div>
+    </PageLayout>
   );
 }
-
-export default Services;

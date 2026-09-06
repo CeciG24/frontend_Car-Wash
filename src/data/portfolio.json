@@ -1,0 +1,12 @@
+{
+  "videos": [
+    {
+      "id": "ejemplo-001",
+      "carro": "Nombre del carro",
+      "servicio": "Servicio realizado",
+      "url": "",
+      "descripcion": "Descripción opcional del trabajo.",
+      "publicado": false
+    }
+  ]
+}

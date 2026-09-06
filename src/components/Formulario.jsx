@@ -1,9 +1,11 @@
+import { apiFetch } from '../services/api';
 import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
+import { es } from "date-fns/locale";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from 'react-modal';
 import "bootstrap/dist/css/bootstrap.min.css";
-import Header from "../components/common/Header";
+
 
 // Intenta establecer el app element, con fallback
 if (typeof document !== 'undefined') {
@@ -42,20 +44,23 @@ function Formulario() {
   const [direccion, setDireccion] = useState("");
   const [servicio, setServicio] = useState("");
   const [servicios, setServicios] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [servicesStatus, setServicesStatus] = useState("loading");
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [appointmentData, setAppointmentData] = useState(null);
 
   useEffect(() => {
     const fetchServicios = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/services");
+        const response = await apiFetch("/services");
         if (!response.ok) {
           throw new Error("Error al obtener servicios");
         }
         const data = await response.json();
-        setServicios(data.Servicios);
+        setServicios(data.Servicios || []); setServicesStatus("ready");
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error:", error); setServicesStatus("error");
       }
     };
 
@@ -64,6 +69,13 @@ function Formulario() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    if (!fecha || !servicio || !nombre.trim() || !numero.trim() || !direccion.trim()) {
+      setError("Completa todos los campos para agendar tu cita.");
+      return;
+    }
+    setLoading(true);
+    setError("");
     
     // Encuentra el nombre del servicio seleccionado
     const servicioSeleccionado = servicios.find(s => s.id_servicio === parseInt(servicio));
@@ -78,7 +90,7 @@ function Formulario() {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/appointment", {
+      const response = await apiFetch("/appointments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,8 +115,8 @@ function Formulario() {
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Hubo un error al agendar la cita. Por favor intenta nuevamente.");
-    }
+      setError("No pudimos agendar la cita. Intenta nuevamente; tus datos se conservaron.");
+    } finally { setLoading(false); }
   };
 
   const closeModal = () => {
@@ -112,164 +124,27 @@ function Formulario() {
   };
 
   return (
-    <div
-      className="min-vh-100 text-light"
-      style={{
-        background: "linear-gradient(135deg, #0a0f24, #112b61, #0f4c81)",
-      }}
-    >
-      <div className="container mt-5 pb-5">
-        <div className="row justify-content-center">
-          <div className="col-lg-8">
-            <div
-              className="card border-0 shadow-lg text-light"
-              style={{
-                background: "rgba(255, 255, 255, 0.07)",
-                backdropFilter: "blur(10px)",
-                borderRadius: "20px",
-              }}
-            >
-              <div className="card-body p-4">
-                <h2 className="card-title text-center fw-bold mb-4">
-                  Agendar Cita
-                </h2>
-                
-                <div className="contact-form">
-                  <div className="mb-3">
-                    <label htmlFor="nombre" className="form-label">
-                      Nombre completo
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="nombre"
-                      placeholder="Ej. Juan Pérez"
-                      required
-                      value={nombre}
-                      onChange={(e) => setNombre(e.target.value)}
-                      style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.2)",
-                        color: "#fff"
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label htmlFor="numero" className="form-label">
-                      Número celular
-                    </label>
-                    <input
-                      type="tel"
-                      className="form-control"
-                      id="numero"
-                      placeholder="Ej. 2221234567"
-                      required
-                      value={numero}
-                      onChange={(e) => setNumero(e.target.value)}
-                      style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.2)",
-                        color: "#fff"
-                      }}
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label htmlFor="servicio" className="form-label">
-                      Servicio
-                    </label>
-                    <select 
-                      className="form-select" 
-                      id="servicio" 
-                      required
-                      value={servicio}
-                      onChange={(e) => setServicio(e.target.value)}
-                      style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.2)",
-                        color: "#fff"
-                      }}
-                    >
-                      <option value="" disabled>
-                        Selecciona el servicio requerido
-                      </option>
-                      {servicios.map((s) => (
-                        <option key={s.id_servicio} value={s.id_servicio} style={{ color: "#000" }}>
-                          {s.nombre} - ${s.precio}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-              
-                  <div className="mb-3">
-                    <label htmlFor="direccion" className="form-label">
-                      Dirección
-                    </label>
-                    <textarea
-                      className="form-control"
-                      id="direccion"
-                      rows="3"
-                      placeholder="Escribe tu dirección completa..."
-                      required
-                      value={direccion}
-                      onChange={(e) => setDireccion(e.target.value)}
-                      style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.2)",
-                        color: "#fff"
-                      }}
-                    ></textarea>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="form-label">Selecciona fecha y hora</label>
-                    <DatePicker
-                      selected={fecha}
-                      onChange={(date) => setFecha(date)}
-                      minDate={new Date()}
-                      dateFormat="dd/MM/yyyy h:mm aa"
-                      showTimeSelect
-                      timeIntervals={60}
-                      className="form-control"
-                      placeholderText="Elige fecha y hora"
-                      required
-                      style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.2)",
-                        color: "#fff"
-                      }}
-                    />
-                  </div>
-
-                  <div className="text-center">
-                    <button 
-                      onClick={handleSubmit}
-                      className="btn btn-primary btn-lg w-100"
-                      style={{
-                        backgroundColor: "rgba(0, 123, 255, 0.8)",
-                        border: "none",
-                        transition: "all 0.3s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(0, 123, 255, 1)";
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(0, 123, 255, 0.8)";
-                        e.currentTarget.style.transform = "translateY(0)";
-                      }}
-                    >
-                      Agendar cita
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div className="booking-form-panel">
+      <span className="eyebrow">RESERVA TU VISITA</span>
+      <h2>Agendar cita</h2>
+      <p className="form-intro">Completa tus datos para solicitar tu servicio.</p>
+      {servicesStatus === "error" && <div className="form-notice" role="status">No pudimos cargar los servicios. Intenta recargar la página o llámanos al <a href="tel:2215568660">221 556 8660</a>.</div>}
+      {servicesStatus === "ready" && !servicios.length && <div className="form-notice" role="status">No hay servicios disponibles para reservar por ahora.</div>}
+      {error && <div className="form-notice" role="alert">{error}</div>}
+      <form onSubmit={handleSubmit} className="booking-fields">
+        <fieldset disabled={loading}>
+          <legend className="form-section-label">01 / TUS DATOS</legend>
+          <div className="field-pair">
+            <div><label htmlFor="nombre">Nombre completo</label><input id="nombre" className="form-control" autoComplete="name" placeholder="Ej. Juan Pérez" required value={nombre} onChange={e => setNombre(e.target.value)} /></div>
+            <div><label htmlFor="numero">Número celular</label><input id="numero" type="tel" className="form-control" autoComplete="tel" placeholder="Ej. 2221234567" required value={numero} onChange={e => setNumero(e.target.value)} /></div>
           </div>
-        </div>
-      </div>
-
+          <div className="form-section-label">02 / TU SERVICIO</div>
+          <div><label htmlFor="servicio">Servicio</label><select id="servicio" className="form-select" required disabled={servicesStatus !== "ready"} value={servicio} onChange={e => setServicio(e.target.value)}><option value="">{servicesStatus === "loading" ? "Cargando servicios…" : "Selecciona un servicio"}</option>{servicios.map(s => <option key={s.id_servicio} value={s.id_servicio}>{s.nombre} - &#36;{s.precio}</option>)}</select></div>
+          <div><label htmlFor="direccion">Dirección</label><textarea id="direccion" className="form-control" rows="2" autoComplete="street-address" placeholder="Calle, número, colonia y ciudad" required value={direccion} onChange={e => setDireccion(e.target.value)} /></div>
+          <div><label htmlFor="fecha">Fecha y hora</label><DatePicker locale={es} timeCaption="Hora" id="fecha" selected={fecha} onChange={setFecha} minDate={new Date()} dateFormat="dd/MM/yyyy h:mm aa" showTimeSelect timeIntervals={60} className="form-control" placeholderText="Elige fecha y hora" required /></div>
+          <button type="submit" className="action-button" disabled={loading || servicesStatus !== "ready" || !servicios.length}>{loading ? "Agendando…" : "Agendar cita ↗"}</button>
+        </fieldset>
+      </form>
       <Modal 
         isOpen={modalIsOpen} 
         onRequestClose={closeModal} 

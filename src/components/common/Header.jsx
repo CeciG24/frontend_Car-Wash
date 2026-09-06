@@ -1,57 +1,8 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import logo from "./../../assets/logoAzul.png";
+import { useState } from 'react';
+import { Link, NavLink } from 'react-router-dom';
 
 export default function Header() {
-  return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-      <div className="container-fluid">
-        {/* Logo */}
-        <Link className="navbar-brand fw-bold" to="/">
-          <img 
-            src={logo}
-            alt="LS 1713" 
-            style={{ height: "40px", marginRight: "10px" }}
-          />
-          LS 1713
-        </Link>
-
-        {/* Toggle mobile */}
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-
-        {/* Links */}
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto align-items-lg-center">
-            <li className="nav-item">
-              <Link to="/" className="nav-link">Inicio</Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/Services" className="nav-link">Servicios</Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/Reviews" className="nav-link">Reseñas</Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/Portfolio" className="nav-link">Portafolio</Link>
-            </li>
-
-            {/* Botón CTA */}
-            <li className="nav-item ms-lg-3">
-              <Link to="/Booking" className="btn btn-info fw-bold">
-                Reservar Ahora
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-  );
+const [open, setOpen] = useState(false);
+return <header className="site-header"><div className="topbar shell"><span>CUIDADO AUTOMOTRIZ · ATENCIÓN AL DETALLE</span><a href="tel:2215568660">TEL. 221 556 8660 ↗</a></div><nav className="main-nav shell" aria-label="Navegación principal"><Link className="brand" to="/" onClick={() => setOpen(false)}><span>LS 1713<small>CAR DETAILING</small></span></Link><button className="menu-toggle" aria-expanded={open} aria-controls="site-menu" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} onClick={() => setOpen(!open)}>{open ? '✕' : '☰'}</button><div id="site-menu" className={`nav-links ${open ? 'is-open' : ''}`}>{[['/', 'Inicio'], ['/Services', 'Servicios'], ['/Reviews', 'Reseñas'], ['/Portfolio', 'Portafolio']].map(([to, label]) => <NavLink key={to} to={to} end onClick={() => setOpen(false)}>{label}</NavLink>)}<Link to="/Booking" className="action-button" onClick={() => setOpen(false)}>Reservar ahora <span>↗</span></Link></div></nav></header>;
 }
+
