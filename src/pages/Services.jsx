@@ -2,6 +2,7 @@ import { apiFetch } from '../services/api';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PageLayout from '../components/common/PageLayout';
+import { WHATSAPP_URL } from '../data/contact';
 
 export default function Services() {
   const [data, setData] = useState([]);
@@ -45,8 +46,8 @@ export default function Services() {
           </article>;
         })}
       </div>
-      {!data.length && <div className="empty-panel" role="status"><span className="empty-symbol">✧</span><h2>{status === 'loading' ? 'Preparando nuestros servicios' : status === 'error' ? 'El catálogo no está disponible por ahora' : 'Estamos preparando nuestros paquetes'}</h2><p>{status === 'error' ? 'Puedes llamarnos para conocer las opciones de cuidado para tu auto.' : 'Aquí encontrarás los servicios y sus precios.'}</p><a className="outline-button" href="tel:2215568660">Consultar servicios ↗</a></div>}
-      <div className="page-callout"><div><span className="eyebrow">ATENCIÓN PERSONALIZADA</span><h2>¿No sabes por dónde empezar?</h2><p>Cuéntanos qué necesita tu auto y te ayudamos a elegir.</p></div><a className="action-button" href="tel:2215568660">Hablemos ↗</a></div>
+      {!data.length && <div className="empty-panel" role="status"><span className="empty-symbol">✧</span><h2>{status === 'loading' ? 'Preparando nuestros servicios' : status === 'error' ? 'El catálogo no está disponible por ahora' : 'Estamos preparando nuestros paquetes'}</h2><p>{status === 'error' ? 'Escríbenos por WhatsApp para conocer las opciones de cuidado para tu auto.' : 'Aquí encontrarás los servicios y sus precios.'}</p><a className="outline-button" href={WHATSAPP_URL}>Consultar por WhatsApp ↗</a></div>}
+      <div className="page-callout"><div><span className="eyebrow">ATENCIÓN PERSONALIZADA</span><h2>¿No sabes por dónde empezar?</h2><p>Cuéntanos qué necesita tu auto y te ayudamos a elegir.</p></div><a className="action-button" href={WHATSAPP_URL}>Hablemos por WhatsApp ↗</a></div>
     </PageLayout>
   );
 }

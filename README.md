@@ -11,6 +11,10 @@ Reinicia Vite después de cambiar estas variables. VITE_API_URL debe ser la URL
 base del backend, sin /api adicional. Las variables VITE_ son públicas: no
 pongas secretos ni contraseñas en ellas.
 
+Las compilaciones de producción usan https://backend-car-wash.onrender.com
+si VITE_API_URL está vacía o apunta a una dirección local. Para otro backend
+publicado, configura VITE_API_URL en Vercel antes de compilar.
+
 npm install
 npm run dev
 

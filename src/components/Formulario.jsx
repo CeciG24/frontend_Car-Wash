@@ -1,236 +1,247 @@
-import { apiFetch } from '../services/api';
-import React, { useState, useEffect } from "react";
-import DatePicker from "react-datepicker";
-import { es } from "date-fns/locale";
-import "react-datepicker/dist/react-datepicker.css";
-import Modal from 'react-modal';
-import "bootstrap/dist/css/bootstrap.min.css";
+import { useEffect, useRef, useState } from 'react';
+import DatePicker from 'react-datepicker';
+import { es } from 'date-fns/locale';
+import carIcon from 'bootstrap-icons/icons/car-front.svg';
+import scooterIcon from 'bootstrap-icons/icons/scooter.svg';
+import suvIcon from 'bootstrap-icons/icons/truck-front.svg';
+import pickupIcon from 'bootstrap-icons/icons/truck.svg';
+import 'react-datepicker/dist/react-datepicker.css';
+import { WHATSAPP_URL } from '../data/contact';
+import { createBooking, getServices } from '../services/api';
 
+const vehicles = [
+  { value: 'Moto', label: 'Moto', icon: scooterIcon },
+  { value: 'Auto', label: 'Auto', icon: carIcon },
+  { value: 'SUV', label: 'SUV', icon: suvIcon },
+  { value: 'SUV Grande', label: 'SUV grande', icon: suvIcon },
+  { value: 'Pickup', label: 'Pickup', icon: pickupIcon },
+  { value: 'Pickup grande', label: 'Pickup grande', icon: pickupIcon },
+];
 
-// Intenta establecer el app element, con fallback
-if (typeof document !== 'undefined') {
-  const appElement = document.getElementById('root') || document.body;
-  Modal.setAppElement(appElement);
-}
+const steps = ['Vehículo', 'Servicio', 'Datos y fecha'];
+const emptyDetails = { name: '', numero_whatsapp: '', email: '', direccion: '' };
+const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 
-// Estilos mejorados para el modal
-const customStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    zIndex: 1000,
-  },
-  content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    transform: 'translate(-50%, -50%)',
-    background: 'linear-gradient(135deg, #0a0f24, #112b61)',
-    border: 'none',
-    borderRadius: '20px',
-    padding: '30px',
-    maxWidth: '500px',
-    width: '90%',
-    maxHeight: '80vh',
-    overflow: 'auto',
-    boxShadow: '0 0 30px rgba(0, 123, 255, 0.5)',
-  },
-};
-
-function Formulario() {
-  const [fecha, setFecha] = useState(null);
-  const [nombre, setNombre] = useState("");
-  const [numero, setNumero] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [servicio, setServicio] = useState("");
-  const [servicios, setServicios] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [servicesStatus, setServicesStatus] = useState("loading");
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [appointmentData, setAppointmentData] = useState(null);
+export default function Formulario() {
+  const [step, setStep] = useState(0);
+  const [vehicle, setVehicle] = useState(null);
+  const [service, setService] = useState(null);
+  const [catalog, setCatalog] = useState({ status: 'loading', services: [] });
+  const [catalogAttempt, setCatalogAttempt] = useState(0);
+  const [details, setDetails] = useState(emptyDetails);
+  const [date, setDate] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [receipt, setReceipt] = useState(null);
+  const heading = useRef(null);
+  const focusHeading = useRef(false);
 
   useEffect(() => {
-    const fetchServicios = async () => {
-      try {
-        const response = await apiFetch("/services");
-        if (!response.ok) {
-          throw new Error("Error al obtener servicios");
-        }
-        const data = await response.json();
-        setServicios(data.Servicios || []); setServicesStatus("ready");
-      } catch (error) {
-        console.error("Error:", error); setServicesStatus("error");
-      }
-    };
+    const controller = new AbortController();
+    getServices({ signal: controller.signal })
+      .then(data => setCatalog({ status: 'ready', services: data.Servicios || [] }))
+      .catch(() => {
+        if (!controller.signal.aborted) setCatalog({ status: 'error', services: [] });
+      });
+    return () => controller.abort();
+  }, [catalogAttempt]);
 
-    fetchServicios();
-  }, []);
+  useEffect(() => {
+    if (focusHeading.current) {
+      heading.current?.focus();
+      focusHeading.current = false;
+    }
+  }, [step]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (loading) return;
-    if (!fecha || !servicio || !nombre.trim() || !numero.trim() || !direccion.trim()) {
-      setError("Completa todos los campos para agendar tu cita.");
+  const availableServices = catalog.services.filter(item => !item.vehiculo || item.vehiculo === vehicle?.value);
+
+  function goTo(nextStep) {
+    setError('');
+    focusHeading.current = true;
+    setStep(nextStep);
+  }
+
+  function selectVehicle(option) {
+    if (vehicle?.value !== option.value) setService(null);
+    setVehicle(option);
+    goTo(1);
+  }
+
+  function selectService(item) {
+    setService(item);
+    goTo(2);
+  }
+
+  function updateDetails(event) {
+    const { name, value } = event.target;
+    setDetails(current => ({ ...current, [name]: value }));
+  }
+
+  function retryCatalog() {
+    setCatalog({ status: 'loading', services: [] });
+    setCatalogAttempt(attempt => attempt + 1);
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    if (saving) return;
+    if (!date || date <= new Date()) {
+      setError('Elige una fecha y hora futuras.');
       return;
     }
-    setLoading(true);
-    setError("");
-    
-    // Encuentra el nombre del servicio seleccionado
-    const servicioSeleccionado = servicios.find(s => s.id_servicio === parseInt(servicio));
-    
-    const appointmentData = {
-      name: nombre,
-      numero_whatsapp: numero,
-      direccion: direccion,
-      scheduled_date: fecha,
-      id_service: servicio,
-      servicio_nombre: servicioSeleccionado ? `${servicioSeleccionado.nombre} - $${servicioSeleccionado.precio}` : servicio
-    };
+    if (Object.values(details).some(value => !value.trim())) {
+      setError('Completa todos los campos para solicitar tu cita.');
+      return;
+    }
 
+    setSaving(true);
+    setError('');
     try {
-      const response = await apiFetch("/appointments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(appointmentData),
+      const result = await createBooking({
+        ...details,
+        email: details.email.trim(),
+        scheduled_date: date.toISOString(),
+        id_service: service.id_servicio,
+        vehiculo: vehicle.value,
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        setAppointmentData(appointmentData);
-        setModalIsOpen(true);
-        console.log(result.message);
-        
-        // Limpiar formulario
-        setNombre("");
-        setNumero("");
-        setDireccion("");
-        setServicio("");
-        setFecha(null);
-      } else {
-        throw new Error("Error en la creación de la cita");
-      }
+      setReceipt(result);
+      goTo(steps.length);
     } catch (error) {
-      console.error("Error:", error);
-      setError("No pudimos agendar la cita. Intenta nuevamente; tus datos se conservaron.");
-    } finally { setLoading(false); }
-  };
+      if (error.code === 'appointment_slot_taken') {
+        setDate(null);
+        setError('Ese horario acaba de ocuparse. Elige otra fecha u hora. Tus datos siguen aquí.');
+      } else {
+        setError('No pudimos registrar la cita. Intenta de nuevo. Tus datos siguen aquí.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
 
-  const closeModal = () => {
-    setModalIsOpen(false);
-  };
+  function restart() {
+    setVehicle(null);
+    setService(null);
+    setDetails(emptyDetails);
+    setDate(null);
+    setReceipt(null);
+    goTo(0);
+  }
 
   return (
-    <div className="booking-form-panel">
-      <span className="eyebrow">RESERVA TU VISITA</span>
-      <h2>Agendar cita</h2>
-      <p className="form-intro">Completa tus datos para solicitar tu servicio.</p>
-      {servicesStatus === "error" && <div className="form-notice" role="status">No pudimos cargar los servicios. Intenta recargar la página o llámanos al <a href="tel:2215568660">221 556 8660</a>.</div>}
-      {servicesStatus === "ready" && !servicios.length && <div className="form-notice" role="status">No hay servicios disponibles para reservar por ahora.</div>}
-      {error && <div className="form-notice" role="alert">{error}</div>}
-      <form onSubmit={handleSubmit} className="booking-fields">
-        <fieldset disabled={loading}>
-          <legend className="form-section-label">01 / TUS DATOS</legend>
-          <div className="field-pair">
-            <div><label htmlFor="nombre">Nombre completo</label><input id="nombre" className="form-control" autoComplete="name" placeholder="Ej. Juan Pérez" required value={nombre} onChange={e => setNombre(e.target.value)} /></div>
-            <div><label htmlFor="numero">Número celular</label><input id="numero" type="tel" className="form-control" autoComplete="tel" placeholder="Ej. 2221234567" required value={numero} onChange={e => setNumero(e.target.value)} /></div>
+    <section className="booking-form-panel" aria-labelledby="booking-step-title">
+      {step < steps.length && (
+        <ol className="booking-progress" aria-label="Pasos de la reserva">
+          {steps.map((label, index) => (
+            <li key={label} aria-current={index === step ? 'step' : undefined}>
+              <span aria-hidden="true">{index < step ? '✓' : index + 1}</span>{label}
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {step === 0 && (
+        <>
+          <h2 id="booking-step-title" ref={heading} tabIndex={-1}>¿Qué vehículo tienes?</h2>
+          <p className="form-intro">Selecciona tu tipo de vehículo para ver los servicios disponibles.</p>
+          <div className="booking-vehicles">
+            {vehicles.map(option => (
+              <button className="booking-vehicle" type="button" key={option.value} onClick={() => selectVehicle(option)}>
+                <img src={option.icon} alt="" />
+                <span>{option.label}</span>
+                <span aria-hidden="true">↗</span>
+              </button>
+            ))}
           </div>
-          <div className="form-section-label">02 / TU SERVICIO</div>
-          <div><label htmlFor="servicio">Servicio</label><select id="servicio" className="form-select" required disabled={servicesStatus !== "ready"} value={servicio} onChange={e => setServicio(e.target.value)}><option value="">{servicesStatus === "loading" ? "Cargando servicios…" : "Selecciona un servicio"}</option>{servicios.map(s => <option key={s.id_servicio} value={s.id_servicio}>{s.nombre} - &#36;{s.precio}</option>)}</select></div>
-          <div><label htmlFor="direccion">Dirección</label><textarea id="direccion" className="form-control" rows="2" autoComplete="street-address" placeholder="Calle, número, colonia y ciudad" required value={direccion} onChange={e => setDireccion(e.target.value)} /></div>
-          <div><label htmlFor="fecha">Fecha y hora</label><DatePicker locale={es} timeCaption="Hora" id="fecha" selected={fecha} onChange={setFecha} minDate={new Date()} dateFormat="dd/MM/yyyy h:mm aa" showTimeSelect timeIntervals={60} className="form-control" placeholderText="Elige fecha y hora" required /></div>
-          <button type="submit" className="action-button" disabled={loading || servicesStatus !== "ready" || !servicios.length}>{loading ? "Agendando…" : "Agendar cita ↗"}</button>
-        </fieldset>
-      </form>
-      <Modal 
-        isOpen={modalIsOpen} 
-        onRequestClose={closeModal} 
-        contentLabel="Cita Agendada"
-        style={customStyles}
-      >
-        <div style={{ textAlign: 'center', color: '#fff' }}>
-          <div style={{ 
-            fontSize: '48px', 
-            color: '#28a745',
-            marginBottom: '20px'
-          }}>
-            ✓
-          </div>
-          <h2 style={{ 
-            color: '#fff', 
-            marginBottom: '20px',
-            fontSize: '24px',
-            fontWeight: 'bold'
-          }}>
-            ¡Cita Agendada Exitosamente!
-          </h2>
-          
-          {appointmentData && (
-            <div style={{ 
-              textAlign: 'left', 
-              marginBottom: '25px',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              padding: '20px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
-            }}>
-              <p style={{ marginBottom: '10px', color: '#fff' }}>
-                <strong>Nombre:</strong> {appointmentData.name}
-              </p>
-              <p style={{ marginBottom: '10px', color: '#fff' }}>
-                <strong>Número:</strong> {appointmentData.numero_whatsapp}
-              </p>
-              <p style={{ marginBottom: '10px', color: '#fff' }}>
-                <strong>Dirección:</strong> {appointmentData.direccion}
-              </p>
-              <p style={{ marginBottom: '10px', color: '#fff' }}>
-                <strong>Fecha y Hora:</strong> {appointmentData.scheduled_date ? new Date(appointmentData.scheduled_date).toLocaleString('es-MX', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true
-                }) : ''}
-              </p>
-              <p style={{ marginBottom: '0', color: '#fff' }}>
-                <strong>Servicio:</strong> {appointmentData.servicio_nombre}
-              </p>
-            </div>
+        </>
+      )}
+
+      {step === 1 && (
+        <>
+          <h2 id="booking-step-title" ref={heading} tabIndex={-1}>Elige un servicio</h2>
+          <p className="form-intro">Opciones disponibles para <strong>{vehicle.label}</strong>.</p>
+          {catalog.status === 'loading' && <p className="form-notice" role="status">Cargando servicios…</p>}
+          {catalog.status === 'error' && (
+            <p className="form-notice" role="status">No pudimos cargar los servicios. <button className="booking-text-button" type="button" onClick={retryCatalog}>Reintentar</button></p>
           )}
-          
-          <button 
-            onClick={closeModal}
-            style={{
-              backgroundColor: 'rgba(0, 123, 255, 0.8)',
-              color: 'white',
-              border: 'none',
-              padding: '12px 30px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              width: '100%'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = 'rgba(0, 123, 255, 1)';
-              e.target.style.transform = 'translateY(-2px)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'rgba(0, 123, 255, 0.8)';
-              e.target.style.transform = 'translateY(0)';
-            }}
-          >
-            Cerrar
-          </button>
-        </div>
-      </Modal>
-    </div>
+          {catalog.status === 'ready' && availableServices.length === 0 && (
+            <p className="form-notice" role="status">Por ahora no hay servicios para este vehículo. <a href={WHATSAPP_URL}>Consúltanos por WhatsApp</a>.</p>
+          )}
+          <div className="booking-services">
+            {availableServices.map(item => (
+              <article className="booking-service" key={item.id_servicio}>
+                <span className="eyebrow">{item.tipo === 'Basico' ? 'Básico' : item.tipo}</span>
+                <h3>{item.nombre}</h3>
+                <p>{currency.format(item.precio)} <small>MXN</small></p>
+                <button className="outline-button" type="button" aria-label={'Elegir servicio ' + item.nombre} onClick={() => selectService(item)}>
+                  Elegir servicio <span aria-hidden="true">↗</span>
+                </button>
+              </article>
+            ))}
+          </div>
+          <button className="booking-text-button booking-back" type="button" onClick={() => goTo(0)}>← Cambiar vehículo</button>
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <h2 id="booking-step-title" ref={heading} tabIndex={-1}>Completa tu reserva</h2>
+          <p className="form-intro">Elige cuándo quieres tu cita y déjanos tus datos.</p>
+          <div className="booking-summary">
+            <div><span>{vehicle.label}</span><strong>{service.nombre}</strong></div>
+            <strong>{currency.format(service.precio)} MXN</strong>
+          </div>
+          <form className="booking-fields" onSubmit={submit}>
+            <fieldset disabled={saving}>
+              <div className="field-pair">
+                <div>
+                  <label htmlFor="booking-name">Nombre completo</label>
+                  <input id="booking-name" className="form-control" name="name" autoComplete="name" maxLength={100} required value={details.name} onChange={updateDetails} />
+                </div>
+                <div>
+                  <label htmlFor="booking-phone">Número de WhatsApp</label>
+                  <input id="booking-phone" className="form-control" name="numero_whatsapp" type="tel" autoComplete="tel" maxLength={100} required value={details.numero_whatsapp} onChange={updateDetails} />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="booking-email">Correo electrónico</label>
+                <input id="booking-email" className="form-control" name="email" type="email" autoComplete="email" aria-describedby="booking-email-help" maxLength={254} pattern={'[^@\\s]+@[^@\\s]+\\.[^@\\s]+'} required value={details.email} onChange={updateDetails} />
+                <small id="booking-email-help" className="booking-help">Aquí recibirás el folio y los detalles de tu solicitud.</small>
+              </div>
+              <div>
+                <label htmlFor="booking-address">Dirección</label>
+                <textarea id="booking-address" className="form-control" name="direccion" autoComplete="street-address" placeholder="Calle, número, colonia y ciudad" maxLength={100} rows={2} required value={details.direccion} onChange={updateDetails} />
+              </div>
+              <div>
+                <label htmlFor="booking-date">Fecha y hora</label>
+                <DatePicker id="booking-date" locale={es} timeCaption="Hora" selected={date} onChange={setDate} minDate={new Date()} dateFormat="dd/MM/yyyy h:mm aa" showTimeSelect timeIntervals={60} className="form-control" placeholderText="Elige fecha y hora" required />
+              </div>
+              {error && <p className="form-notice" role="alert">{error}</p>}
+              <button className="action-button" type="submit">{saving ? 'Registrando cita…' : 'Solicitar cita ↗'}</button>
+              <button className="booking-text-button booking-back" type="button" onClick={() => goTo(1)}>← Cambiar servicio</button>
+            </fieldset>
+          </form>
+        </>
+      )}
+
+      {receipt && (
+        <>
+          <span className="booking-success-icon" aria-hidden="true">✓</span>
+          <h2 id="booking-step-title" ref={heading} tabIndex={-1}>Recibimos tu solicitud</h2>
+          <p className="form-intro">Tu cita quedó pendiente. Guarda el folio para cualquier consulta.</p>
+          <dl className="booking-receipt">
+            <div><dt>Folio</dt><dd>#{receipt.id_appointment}</dd></div>
+            <div><dt>Vehículo</dt><dd>{vehicle.label}</dd></div>
+            <div><dt>Servicio</dt><dd>{service.nombre}</dd></div>
+            <div><dt>Fecha solicitada</dt><dd>{date.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}</dd></div>
+          </dl>
+          {receipt.confirmation_email_sent ? (
+            <p className="form-intro">Enviamos los detalles a <strong>{details.email.trim()}</strong>.</p>
+          ) : (
+            <p className="form-notice">No pudimos enviar el correo. Si necesitas ayuda con tu folio, <a href={WHATSAPP_URL}>escríbenos por WhatsApp</a>.</p>
+          )}
+          <button className="outline-button" type="button" onClick={restart}>Agendar otra cita ↗</button>
+        </>
+      )}
+    </section>
   );
 }
-
-export default Formulario;
