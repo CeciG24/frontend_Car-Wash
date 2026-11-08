@@ -343,6 +343,9 @@ a:hover {
 .service-item .eyebrow {
   margin-bottom:14px
 }
+.service-estimate {
+  color:var(--muted)
+}
 .service-price {
   display:flex;
   justify-content:space-between;

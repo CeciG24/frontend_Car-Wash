@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PageLayout from '../components/common/PageLayout';
 import { WHATSAPP_URL } from '../data/contact';
+import { serviceCategoryLabel, serviceDurationLabel } from '../data/serviceDetails';
 
 export default function Services() {
   const [data, setData] = useState([]);
@@ -36,17 +37,17 @@ export default function Services() {
         {data.map((item, index) => {
           const id = item.id_servicio ?? item.id;
           return <article className="catalog-card" key={id}>
-            <span className="catalog-number">0{index + 1} / DETAILING</span>
+            <span className="catalog-number">{String(index + 1).padStart(2, '0')} / {serviceCategoryLabel(item)}</span>
             <h2>{item.nombre}</h2>
             <div className="catalog-price"><span>$</span>{item.precio}</div>
-            <p>Cuidado profesional y atención en cada detalle de tu auto.</p>
+            <p>{serviceDurationLabel(item.duracion_minutos)}</p>
             <button className="detail-toggle" aria-expanded={!!expanded[id]} aria-controls={`detail-${id}`} onClick={() => toggle(id)}>Detalles del servicio <span>{expanded[id] ? '−' : '+'}</span></button>
             {expanded[id] && <p id={`detail-${id}`} className="service-description" role="status">{descriptions[id]}</p>}
             <Link className="action-button" to="/Booking">Reservar este servicio ↗</Link>
           </article>;
         })}
       </div>
-      {!data.length && <div className="empty-panel" role="status"><span className="empty-symbol">✧</span><h2>{status === 'loading' ? 'Preparando nuestros servicios' : status === 'error' ? 'El catálogo no está disponible por ahora' : 'Estamos preparando nuestros paquetes'}</h2><p>{status === 'error' ? 'Escríbenos por WhatsApp para conocer las opciones de cuidado para tu auto.' : 'Aquí encontrarás los servicios y sus precios.'}</p><a className="outline-button" href={WHATSAPP_URL}>Consultar por WhatsApp ↗</a></div>}
+      {!data.length && <div className="empty-panel" role="status"><span className="empty-symbol">✧</span><h2>{status === 'loading' ? 'Preparando nuestros servicios' : status === 'error' ? 'El catálogo no está disponible por ahora' : 'Estamos preparando el catálogo'}</h2><p>{status === 'error' ? 'Escríbenos por WhatsApp para conocer las opciones de cuidado para tu auto.' : 'Aquí encontrarás los servicios y sus precios.'}</p><a className="outline-button" href={WHATSAPP_URL}>Consultar por WhatsApp ↗</a></div>}
       <div className="page-callout"><div><span className="eyebrow">ATENCIÓN PERSONALIZADA</span><h2>¿No sabes por dónde empezar?</h2><p>Cuéntanos qué necesita tu auto y te ayudamos a elegir.</p></div><a className="action-button" href={WHATSAPP_URL}>Hablemos por WhatsApp ↗</a></div>
     </PageLayout>
   );
