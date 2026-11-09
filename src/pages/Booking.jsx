@@ -1,9 +1,11 @@
+import { useSearchParams } from 'react-router-dom';
 import PageLayout from '../components/common/PageLayout';
 import Formulario from '../components/Formulario';
 import auto from '../assets/autoLimpio.jpg';
 import { WHATSAPP_URL } from '../data/contact';
 
 export default function Booking() {
+  const [selection] = useSearchParams();
   return (
     <PageLayout eyebrow="RESERVAS" title="Dale a tu auto su mejor versión." description="Elige tu servicio y el momento ideal. Nosotros cuidamos cada detalle.">
       <div className="booking-layout">
@@ -16,7 +18,8 @@ export default function Booking() {
             <a className="text-link" href={WHATSAPP_URL}>¿Tienes dudas? WhatsApp 221 556 8660 ↗</a>
           </div>
         </aside>
-        <Formulario />
+        <Formulario key={selection.toString()} initialServiceId={selection.get('servicio') || ''}
+          initialVehicle={selection.get('vehiculo') || ''} initialExtraId={selection.get('extra') || ''} />
       </div>
     </PageLayout>
   );

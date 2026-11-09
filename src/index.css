@@ -973,6 +973,22 @@ input[type=radio],input[type=checkbox] {
 .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .booking-fields .form-control, .review-form-panel .form-control, .booking-fields .form-select { padding: 13px 15px; font-size: 14px; background-color: #0b1f3f !important; }
 .booking-fields .form-select { padding-right: 35px; }
+.booking-fields .form-select { appearance: auto; color-scheme: dark; }
+.booking-extras { min-width: 0; margin-bottom: 24px; }
+.booking-extras legend { float: none; width: auto; font-size: 16px; font-weight: 700; }
+.booking-fields .booking-extra {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.booking-extra input { margin-top: 3px; accent-color: var(--sky); }
+.booking-extra span:last-child { grid-column: 2; color: var(--sky); }
+.booking-extra small { display: block; color: var(--muted); }
 .booking-fields .react-datepicker-wrapper, .booking-fields .react-datepicker__input-container { display: block; width: 100%; }
 .booking-fields .action-button, .review-form-panel .action-button { width: 100%; margin-top: 10px; }
 .action-button:disabled { opacity: .5; cursor: not-allowed; }

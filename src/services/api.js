@@ -19,6 +19,7 @@ export async function apiRequest(path, options = {}) {
   if (!response.ok) {
     const error = new Error(data.error || 'No se pudo completar la solicitud');
     error.code = data.code;
+    error.status = response.status;
     throw error;
   }
   return data;

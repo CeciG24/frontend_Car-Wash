@@ -23,10 +23,11 @@ const steps = ['Vehículo', 'Servicio', 'Datos y fecha'];
 const emptyDetails = { name: '', numero_whatsapp: '', email: '', direccion: '' };
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 
-export default function Formulario() {
-  const [step, setStep] = useState(0);
-  const [vehicle, setVehicle] = useState(null);
-  const [service, setService] = useState(null);
+export default function Formulario({ initialServiceId = '', initialVehicle = '', initialExtraId = '' }) {
+  const [vehicleValue, setVehicleValue] = useState(vehicles.some(option => option.value === initialVehicle) ? initialVehicle : '');
+  const [step, setStep] = useState(initialServiceId ? 2 : initialExtraId && vehicleValue ? 1 : 0);
+  const [serviceId, setServiceId] = useState(initialServiceId);
+  const [extraIds, setExtraIds] = useState(initialExtraId ? [initialExtraId] : []);
   const [catalog, setCatalog] = useState({ status: 'loading', services: [] });
   const [catalogAttempt, setCatalogAttempt] = useState(0);
   const [details, setDetails] = useState(emptyDetails);
@@ -35,7 +36,15 @@ export default function Formulario() {
   const [error, setError] = useState('');
   const [receipt, setReceipt] = useState(null);
   const heading = useRef(null);
-  const focusHeading = useRef(false);
+  const focusHeading = useRef(Boolean(initialServiceId || initialExtraId));
+
+  const service = catalog.services.find(item => !item.es_extra && String(item.id_servicio) === serviceId);
+  const vehicle = vehicles.find(option => option.value === (service?.vehiculo || vehicleValue));
+  const compatible = catalog.services.filter(item => !item.vehiculo || item.vehiculo === vehicle?.value);
+  const availableServices = compatible.filter(item => !item.es_extra);
+  const availableExtras = compatible.filter(item => item.es_extra);
+  const selectedExtras = availableExtras.filter(item => extraIds.includes(String(item.id_servicio)));
+  const estimatedPrice = Number(service?.precio ?? 0) + selectedExtras.reduce((sum, item) => sum + Number(item.precio), 0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -48,13 +57,11 @@ export default function Formulario() {
   }, [catalogAttempt]);
 
   useEffect(() => {
-    if (focusHeading.current) {
+    if (focusHeading.current && (step !== 2 || catalog.status !== 'loading')) {
       heading.current?.focus();
       focusHeading.current = false;
     }
-  }, [step]);
-
-  const availableServices = catalog.services.filter(item => !item.vehiculo || item.vehiculo === vehicle?.value);
+  }, [step, catalog.status]);
 
   function goTo(nextStep) {
     setError('');
@@ -63,14 +70,28 @@ export default function Formulario() {
   }
 
   function selectVehicle(option) {
-    if (vehicle?.value !== option.value) setService(null);
-    setVehicle(option);
+    if (vehicle?.value !== option.value) setServiceId('');
+    changeVehicle(option.value);
     goTo(1);
   }
 
+  function changeVehicle(value) {
+    setVehicleValue(value);
+    if (catalog.status === 'ready') {
+      setExtraIds(current => current.filter(id => catalog.services.some(item =>
+        String(item.id_servicio) === id && (!item.vehiculo || item.vehiculo === value)
+      )));
+    }
+  }
+
   function selectService(item) {
-    setService(item);
+    setVehicleValue(vehicle.value);
+    setServiceId(String(item.id_servicio));
     goTo(2);
+  }
+
+  function toggleExtra(id) {
+    setExtraIds(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
   }
 
   function updateDetails(event) {
@@ -85,7 +106,7 @@ export default function Formulario() {
 
   async function submit(event) {
     event.preventDefault();
-    if (saving) return;
+    if (saving || !service || !vehicle) return;
     if (!date || date <= new Date()) {
       setError('Elige una fecha y hora futuras.');
       return;
@@ -104,6 +125,7 @@ export default function Formulario() {
         scheduled_date: date.toISOString(),
         id_service: service.id_servicio,
         vehiculo: vehicle.value,
+        ids_extras: selectedExtras.map(item => item.id_servicio),
       });
       setReceipt(result);
       goTo(steps.length);
@@ -111,6 +133,8 @@ export default function Formulario() {
       if (error.code === 'appointment_slot_taken') {
         setDate(null);
         setError('Ese horario acaba de ocuparse. Elige otra fecha u hora. Tus datos siguen aquí.');
+      } else if (error.status === 400) {
+        setError(error.message);
       } else {
         setError('No pudimos registrar la cita. Intenta de nuevo. Tus datos siguen aquí.');
       }
@@ -120,8 +144,9 @@ export default function Formulario() {
   }
 
   function restart() {
-    setVehicle(null);
-    setService(null);
+    setVehicleValue('');
+    setServiceId('');
+    setExtraIds([]);
     setDetails(emptyDetails);
     setDate(null);
     setReceipt(null);
@@ -160,6 +185,7 @@ export default function Formulario() {
         <>
           <h2 id="booking-step-title" ref={heading} tabIndex={-1}>Elige un servicio</h2>
           <p className="form-intro">Opciones disponibles para <strong>{vehicle.label}</strong>.</p>
+          {selectedExtras.length > 0 && <p className="form-notice">Elige el servicio principal para agregar {selectedExtras.map(item => item.nombre).join(', ')}.</p>}
           {availableServices.length > 0 && <p className="price-notice">{FINAL_PRICE_NOTICE}.</p>}
           {catalog.status === 'loading' && <p className="form-notice" role="status">Cargando servicios…</p>}
           {catalog.status === 'error' && (
@@ -186,17 +212,57 @@ export default function Formulario() {
         </>
       )}
 
-      {step === 2 && (
+      {step === 2 && !service && (
+        <>
+          <h2 id="booking-step-title" ref={heading} tabIndex={-1}>Completa tu reserva</h2>
+          {catalog.status === 'loading' && <p className="form-intro" role="status">Cargando el servicio seleccionado…</p>}
+          {catalog.status === 'error' && (
+            <p className="form-notice" role="status">No pudimos cargar el servicio. <button className="booking-text-button" type="button" onClick={retryCatalog}>Reintentar</button></p>
+          )}
+          {catalog.status === 'ready' && (
+            <>
+              <p className="form-notice" role="status">El servicio seleccionado ya no está disponible.</p>
+              <button className="outline-button" type="button" onClick={restart}>Elegir otro servicio</button>
+            </>
+          )}
+        </>
+      )}
+
+      {step === 2 && service && (
         <>
           <h2 id="booking-step-title" ref={heading} tabIndex={-1}>Completa tu reserva</h2>
           <p className="form-intro">Elige cuándo quieres tu cita y déjanos tus datos.</p>
           <div className="booking-summary">
-            <div><span>{vehicle.label}</span><strong>{service.nombre}</strong><span>{serviceDurationLabel(service.duracion_minutos)}</span></div>
-            <div className="booking-summary-price"><span>{STARTING_PRICE_LABEL}</span><strong>{currency.format(service.precio)} MXN</strong></div>
+            <div><span>{vehicle?.label || serviceVehicleLabel(service.vehiculo)}</span><strong>{service.nombre}</strong><span>{serviceDurationLabel(service.duracion_minutos)}</span></div>
+            <div className="booking-summary-price"><span>{selectedExtras.length > 0 && 'Total estimado · '}{STARTING_PRICE_LABEL}</span><strong>{currency.format(estimatedPrice)} MXN</strong></div>
             <p className="price-notice">{FINAL_PRICE_NOTICE}.</p>
           </div>
           <form className="booking-fields" onSubmit={submit}>
             <fieldset disabled={saving}>
+              {!service.vehiculo && (
+                <div>
+                  <label htmlFor="booking-vehicle">Tipo de vehículo</label>
+                  <select id="booking-vehicle" className="form-select" value={vehicleValue} required onChange={event => changeVehicle(event.target.value)}>
+                    <option value="">Selecciona tu vehículo</option>
+                    {vehicles.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                </div>
+              )}
+              {vehicle && availableExtras.length > 0 && (
+                <fieldset className="booking-extras">
+                  <legend>Extras opcionales</legend>
+                  {availableExtras.map(item => {
+                    const id = String(item.id_servicio);
+                    return (
+                      <label className="booking-extra" key={id}>
+                        <input type="checkbox" checked={extraIds.includes(id)} onChange={() => toggleExtra(id)} />
+                        <span><strong>{item.nombre}</strong><small>{serviceDurationLabel(item.duracion_minutos)}</small></span>
+                        <span>{STARTING_PRICE_LABEL} {currency.format(item.precio)} MXN</span>
+                      </label>
+                    );
+                  })}
+                </fieldset>
+              )}
               <div className="field-pair">
                 <div>
                   <label htmlFor="booking-name">Nombre completo</label>
@@ -222,7 +288,7 @@ export default function Formulario() {
               </div>
               {error && <p className="form-notice" role="alert">{error}</p>}
               <button className="action-button" type="submit">{saving ? 'Registrando cita…' : 'Solicitar cita ↗'}</button>
-              <button className="booking-text-button booking-back" type="button" onClick={() => goTo(1)}>← Cambiar servicio</button>
+              <button className="booking-text-button booking-back" type="button" onClick={() => goTo(vehicle ? 1 : 0)}>← Cambiar servicio</button>
             </fieldset>
           </form>
         </>
@@ -237,6 +303,7 @@ export default function Formulario() {
             <div><dt>Folio</dt><dd>#{receipt.id_appointment}</dd></div>
             <div><dt>Vehículo</dt><dd>{vehicle.label}</dd></div>
             <div><dt>Servicio</dt><dd>{service.nombre}</dd></div>
+            {selectedExtras.length > 0 && <div><dt>Extras</dt><dd>{selectedExtras.map(item => item.nombre).join(', ')}</dd></div>}
             <div><dt>Fecha solicitada</dt><dd>{date.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}</dd></div>
           </dl>
           {receipt.confirmation_email_sent ? (

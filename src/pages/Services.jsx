@@ -1,6 +1,6 @@
 import { apiFetch } from '../services/api';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import PageLayout from '../components/common/PageLayout';
 import { WHATSAPP_URL } from '../data/contact';
 import { FINAL_PRICE_NOTICE, STARTING_PRICE_LABEL, serviceCategoryLabel, serviceDurationLabel, serviceVehicleLabel } from '../data/serviceDetails';
@@ -12,8 +12,9 @@ export default function Services() {
   const [status, setStatus] = useState('loading');
   const [descriptions, setDescriptions] = useState({});
   const [expanded, setExpanded] = useState({});
-  const [vehicle, setVehicle] = useState('');
-  const [category, setCategory] = useState('');
+  const [filters, setFilters] = useSearchParams();
+  const vehicle = filters.get('vehiculo') || '';
+  const category = filters.get('categoria') || '';
 
   const vehicles = [...new Set(data.map(item => item.vehiculo).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
   const categories = [...new Set(data.map(item => item.categoria || uncategorized))].sort((a, b) => a.localeCompare(b, 'es'));
@@ -22,9 +23,15 @@ export default function Services() {
     (!category || (item.categoria || uncategorized) === category)
   ));
 
-  function clearFilters() {
-    setVehicle('');
-    setCategory('');
+  function updateFilters(changes) {
+    setFilters(previous => {
+      const next = new URLSearchParams(previous);
+      for (const [key, value] of Object.entries(changes)) {
+        if (value) next.set(key, value);
+        else next.delete(key);
+      }
+      return next;
+    }, { replace: true });
   }
 
   useEffect(() => {
@@ -55,19 +62,19 @@ export default function Services() {
           <div className="catalog-filters" role="group" aria-label="Filtrar servicios">
             <div>
               <label htmlFor="catalog-vehicle">Vehículo</label>
-              <select id="catalog-vehicle" className="form-select" value={vehicle} onChange={event => setVehicle(event.target.value)}>
+              <select id="catalog-vehicle" className="form-select" value={vehicle} onChange={event => updateFilters({ vehiculo: event.target.value })}>
                 <option value="">Todos los vehículos</option>
                 {vehicles.map(option => <option key={option} value={option}>{serviceVehicleLabel(option)}</option>)}
               </select>
             </div>
             <div>
               <label htmlFor="catalog-category">Categoría</label>
-              <select id="catalog-category" className="form-select" value={category} onChange={event => setCategory(event.target.value)}>
+              <select id="catalog-category" className="form-select" value={category} onChange={event => updateFilters({ categoria: event.target.value })}>
                 <option value="">Todas las categorías</option>
                 {categories.map(option => <option key={option} value={option}>{option}</option>)}
               </select>
             </div>
-            <button className="outline-button" type="button" disabled={!vehicle && !category} onClick={clearFilters}>Limpiar filtros</button>
+            <button className="outline-button" type="button" disabled={!vehicle && !category} onClick={() => updateFilters({ vehiculo: '', categoria: '' })}>Limpiar filtros</button>
           </div>
           <div className="catalog-context">
             <p role="status">{results.length} {results.length === 1 ? 'servicio' : 'servicios'}</p>
@@ -78,10 +85,12 @@ export default function Services() {
       <div className="catalog-grid">
         {results.map((item, index) => {
           const id = item.id_servicio ?? item.id;
+          const booking = new URLSearchParams({ [item.es_extra ? 'extra' : 'servicio']: id });
+          if (item.vehiculo || vehicle) booking.set('vehiculo', item.vehiculo || vehicle);
           return <article className="catalog-card" key={id}>
             <span className="catalog-number">{String(index + 1).padStart(2, '0')} / {serviceCategoryLabel(item)}</span>
             <h2>{item.nombre}</h2>
-            <span className="catalog-vehicle">{serviceVehicleLabel(item.vehiculo)}</span>
+            <span className="catalog-vehicle">{serviceVehicleLabel(item.vehiculo)}{item.es_extra && ' · Extra'}</span>
             <div className="catalog-price">
               <span className="price-prefix">{STARTING_PRICE_LABEL}</span>
               <strong><span>$</span>{item.precio}</strong>
@@ -89,7 +98,7 @@ export default function Services() {
             <p>{serviceDurationLabel(item.duracion_minutos)}</p>
             <button className="detail-toggle" aria-expanded={!!expanded[id]} aria-controls={`detail-${id}`} onClick={() => toggle(id)}>Detalles del servicio <span>{expanded[id] ? '−' : '+'}</span></button>
             {expanded[id] && <p id={`detail-${id}`} className="service-description" role="status">{descriptions[id]}</p>}
-            <Link className="action-button" to="/Booking">Reservar este servicio ↗</Link>
+            <Link className="action-button" to={'/Booking?' + booking}>{item.es_extra ? 'Agregar a una reserva' : 'Reservar este servicio'} ↗</Link>
           </article>;
         })}
       </div>
