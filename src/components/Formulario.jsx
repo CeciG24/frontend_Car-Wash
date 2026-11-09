@@ -7,7 +7,7 @@ import suvIcon from 'bootstrap-icons/icons/truck-front.svg';
 import pickupIcon from 'bootstrap-icons/icons/truck.svg';
 import 'react-datepicker/dist/react-datepicker.css';
 import { WHATSAPP_URL } from '../data/contact';
-import { serviceCategoryLabel, serviceDurationLabel } from '../data/serviceDetails';
+import { FINAL_PRICE_NOTICE, STARTING_PRICE_LABEL, serviceCategoryLabel, serviceDurationLabel, serviceVehicleLabel } from '../data/serviceDetails';
 import { createBooking, getServices } from '../services/api';
 
 const vehicles = [
@@ -160,6 +160,7 @@ export default function Formulario() {
         <>
           <h2 id="booking-step-title" ref={heading} tabIndex={-1}>Elige un servicio</h2>
           <p className="form-intro">Opciones disponibles para <strong>{vehicle.label}</strong>.</p>
+          {availableServices.length > 0 && <p className="price-notice">{FINAL_PRICE_NOTICE}.</p>}
           {catalog.status === 'loading' && <p className="form-notice" role="status">Cargando servicios…</p>}
           {catalog.status === 'error' && (
             <p className="form-notice" role="status">No pudimos cargar los servicios. <button className="booking-text-button" type="button" onClick={retryCatalog}>Reintentar</button></p>
@@ -172,7 +173,8 @@ export default function Formulario() {
               <article className="booking-service" key={item.id_servicio}>
                 <span className="eyebrow">{serviceCategoryLabel(item)}</span>
                 <h3>{item.nombre}</h3>
-                <p>{currency.format(item.precio)} <small>MXN</small></p>
+                <small>{serviceVehicleLabel(item.vehiculo)}</small>
+                <p><span className="price-prefix">{STARTING_PRICE_LABEL}</span>{currency.format(item.precio)} <small>MXN</small></p>
                 <small>{serviceDurationLabel(item.duracion_minutos)}</small>
                 <button className="outline-button" type="button" aria-label={'Elegir servicio ' + item.nombre} onClick={() => selectService(item)}>
                   Elegir servicio <span aria-hidden="true">↗</span>
@@ -190,7 +192,8 @@ export default function Formulario() {
           <p className="form-intro">Elige cuándo quieres tu cita y déjanos tus datos.</p>
           <div className="booking-summary">
             <div><span>{vehicle.label}</span><strong>{service.nombre}</strong><span>{serviceDurationLabel(service.duracion_minutos)}</span></div>
-            <strong>{currency.format(service.precio)} MXN</strong>
+            <div className="booking-summary-price"><span>{STARTING_PRICE_LABEL}</span><strong>{currency.format(service.precio)} MXN</strong></div>
+            <p className="price-notice">{FINAL_PRICE_NOTICE}.</p>
           </div>
           <form className="booking-fields" onSubmit={submit}>
             <fieldset disabled={saving}>

@@ -1,3 +1,10 @@
+export const STARTING_PRICE_LABEL = 'A partir de:';
+export const FINAL_PRICE_NOTICE = 'El precio final se da después de la inspección visual';
+
+export function serviceVehicleLabel(vehicle) {
+  return vehicle === 'SUV Grande' ? 'SUV grande' : vehicle || 'Todos los vehículos';
+}
+
 export function serviceDurationLabel(minutes) {
   if (!Number.isInteger(minutes) || minutes <= 0) return 'Duración por confirmar';
   const hours = Math.floor(minutes / 60);
