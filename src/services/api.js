@@ -13,7 +13,10 @@ export function apiFetch(path, options = {}) {
 export async function apiRequest(path, options = {}) {
   const response = await apiFetch(path, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: {
+      ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      ...options.headers,
+    },
   });
   const data = await response.json();
   if (!response.ok) {

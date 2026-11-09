@@ -21,6 +21,7 @@ const vehicles = [
 
 const steps = ['Vehículo', 'Servicio', 'Datos y fecha'];
 const emptyDetails = { name: '', numero_whatsapp: '', email: '', direccion: '' };
+const workshopAddress = 'En taller';
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 
 export default function Formulario({ initialServiceId = '', initialVehicle = '', initialExtraId = '' }) {
@@ -31,6 +32,7 @@ export default function Formulario({ initialServiceId = '', initialVehicle = '',
   const [catalog, setCatalog] = useState({ status: 'loading', services: [] });
   const [catalogAttempt, setCatalogAttempt] = useState(0);
   const [details, setDetails] = useState(emptyDetails);
+  const [inWorkshop, setInWorkshop] = useState(false);
   const [date, setDate] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -111,7 +113,8 @@ export default function Formulario({ initialServiceId = '', initialVehicle = '',
       setError('Elige una fecha y hora futuras.');
       return;
     }
-    if (Object.values(details).some(value => !value.trim())) {
+    const bookingDetails = { ...details, direccion: inWorkshop ? workshopAddress : details.direccion };
+    if (Object.values(bookingDetails).some(value => !value.trim())) {
       setError('Completa todos los campos para solicitar tu cita.');
       return;
     }
@@ -120,7 +123,7 @@ export default function Formulario({ initialServiceId = '', initialVehicle = '',
     setError('');
     try {
       const result = await createBooking({
-        ...details,
+        ...bookingDetails,
         email: details.email.trim(),
         scheduled_date: date.toISOString(),
         id_service: service.id_servicio,
@@ -148,6 +151,7 @@ export default function Formulario({ initialServiceId = '', initialVehicle = '',
     setServiceId('');
     setExtraIds([]);
     setDetails(emptyDetails);
+    setInWorkshop(false);
     setDate(null);
     setReceipt(null);
     goTo(0);
@@ -279,8 +283,16 @@ export default function Formulario({ initialServiceId = '', initialVehicle = '',
                 <small id="booking-email-help" className="booking-help">Aquí recibirás el folio y los detalles de tu solicitud.</small>
               </div>
               <div>
+                <label htmlFor="booking-location">Lugar del servicio</label>
+                <select id="booking-location" className="form-select" value={inWorkshop ? 'taller' : 'domicilio'} onChange={event => setInWorkshop(event.target.value === 'taller')}>
+                  <option value="domicilio">A domicilio</option>
+                  <option value="taller">En nuestras instalaciones</option>
+                </select>
+              </div>
+              <div>
                 <label htmlFor="booking-address">Dirección</label>
-                <textarea id="booking-address" className="form-control" name="direccion" autoComplete="street-address" placeholder="Calle, número, colonia y ciudad" maxLength={100} rows={2} required value={details.direccion} onChange={updateDetails} />
+                <textarea id="booking-address" className="form-control" name="direccion" autoComplete="street-address" placeholder="Calle, número, colonia y ciudad" maxLength={100} rows={2}
+                  disabled={inWorkshop} required={!inWorkshop} value={inWorkshop ? workshopAddress : details.direccion} onChange={updateDetails} />
               </div>
               <div>
                 <label htmlFor="booking-date">Fecha y hora</label>

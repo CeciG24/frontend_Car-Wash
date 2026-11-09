@@ -1,6 +1,5 @@
 import { apiFetch } from '../../services/api';
-import React, { useState } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { useState } from "react";
 
 function Contact() {
   const [nombre, setNombre] = useState("");
@@ -63,29 +62,28 @@ function Contact() {
   };
 
   return (
-    <div className="flex-grow-1 d-flex flex-column justify-content-center text-center text-light px-4 py-2">
-      <h2 className="mb-3 fs-2">Contáctanos</h2>
-      <p className="mb-4 fs-5">
+    <div className="contact-panel">
+      <h2>Contáctanos</h2>
+      <p>
         Completa nuestro formulario de contacto para recibir más información sobre nuestros servicios de lavado de autos.
       </p>
-      <div className="card-body p-4">
         {message.text && (
           <div
-            className={`alert alert-${message.type} alert-dismissible fade show`}
+            className={`form-notice contact-message contact-message-${message.type}`}
             role="alert"
           >
             {message.text}
             <button
               type="button"
-              className="btn-close" aria-label="Cerrar aviso"
+              className="contact-message-close" aria-label="Cerrar aviso"
               onClick={() => setMessage({ text: "", type: "" })}
-            ></button>
+            >×</button>
           </div>
         )}
 
         <form className="contact-form" onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="nombre" className="form-label">
+          <div>
+            <label htmlFor="nombre">
               Nombre completo
             </label>
             <input
@@ -100,8 +98,8 @@ function Contact() {
             />
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="numero" className="form-label">
+          <div>
+            <label htmlFor="numero">
               Número celular
             </label>
             <input
@@ -116,8 +114,8 @@ function Contact() {
             />
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="detalles" className="form-label">
+          <div>
+            <label htmlFor="detalles">
               Detalles
             </label>
             <textarea
@@ -132,24 +130,10 @@ function Contact() {
             ></textarea>
           </div>
 
-          <div className="text-center">
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-100"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                  Enviando...
-                </>
-              ) : (
-                "Enviar"
-              )}
-            </button>
-          </div>
+          <button type="submit" className="action-button" disabled={loading}>
+            {loading ? 'Enviando…' : 'Enviar'}
+          </button>
         </form>
-      </div>
     </div>
   );
 }

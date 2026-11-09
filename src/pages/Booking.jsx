@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import PageLayout from '../components/common/PageLayout';
 import Formulario from '../components/Formulario';
-import auto from '../assets/autoLimpio.jpg';
+import { homePhoto } from '../data/sitePages';
 import { WHATSAPP_URL } from '../data/contact';
 
 export default function Booking() {
@@ -10,7 +10,7 @@ export default function Booking() {
     <PageLayout eyebrow="RESERVAS" title="Dale a tu auto su mejor versión." description="Elige tu servicio y el momento ideal. Nosotros cuidamos cada detalle.">
       <div className="booking-layout">
         <aside className="booking-aside">
-          <img src={auto} alt="Detallado de la pintura de un auto" />
+          <img src={homePhoto} width={612} height={408} alt="Detallado de la pintura de un auto" />
           <div className="aside-content">
             <span className="eyebrow">TU PRÓXIMA VISITA</span>
             <h2>Buen cuidado.<br />Desde el primer paso.</h2>

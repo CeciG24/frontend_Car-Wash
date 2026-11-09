@@ -4,6 +4,7 @@ import { getPortfolioItems } from '../../services/portfolioData';
 import { getPortfolioMedia } from '../../services/portfolioMedia';
 
 function PortfolioCard({ item }) {
+  const [playerOpen, setPlayerOpen] = useState(false);
   const media = getPortfolioMedia(item.url);
   const title = item.carro || 'Trabajo de detailing';
   return (
@@ -15,9 +16,16 @@ function PortfolioCard({ item }) {
       </div>
       <div className="tiktok-video">
         {media.type === 'tiktok' ? (
-          <iframe src={media.embed} title={`${title} — ${item.servicio || 'Detailing'} en TikTok`} loading="lazy" allow="fullscreen" allowFullScreen />
+          playerOpen ? (
+            <iframe src={media.embed.replace('autoplay=0', 'autoplay=1')} title={`${title} — ${item.servicio || 'Detailing'} en TikTok`} allow="autoplay; fullscreen" allowFullScreen />
+          ) : (
+            <div className="video-unavailable">
+              <span aria-hidden="true">▷</span>
+              <button className="outline-button" type="button" onClick={() => setPlayerOpen(true)} aria-label={`Reproducir video de ${title} en TikTok`}>Reproducir en TikTok</button>
+            </div>
+          )
         ) : media.type === 'video' ? (
-          <video controls playsInline preload="metadata" aria-label={`Video de ${title}`}><source src={media.url} />Tu navegador no puede reproducir este video.</video>
+          <video controls playsInline preload="none" aria-label={`Video de ${title}`}><source src={media.url} />Tu navegador no puede reproducir este video.</video>
         ) : (
           <div className="video-unavailable"><span aria-hidden="true">▷</span><p>{media.type === 'link' ? 'Mira este trabajo en TikTok.' : 'Video no disponible por ahora.'}</p>{media.url && <a className="outline-button" href={media.url} target="_blank" rel="noopener noreferrer">Abrir TikTok ↗</a>}</div>
         )}
